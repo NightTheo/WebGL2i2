@@ -15,6 +15,7 @@
 			let camera, scene, renderer;
 			let col, down_col, top_col, column, columns;
       let arr = new Array(8).fill(new Array(18));
+	  let stairs = new Array(3) ;
 
 			init();
 			animate();
@@ -23,14 +24,14 @@
 
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 20000 );
 				camera.position.z = 2000;
-        camera.position.y = 400;
+		        camera.position.y = 400;
 				camera.position.x = 600;
-        //camera.rotation.x = -0.3;
-				//camera.rotation.y = -0.5;
+		        // camera.rotation.x = -0.3;
+				// camera.rotation.y = -0.5;
 
 				scene = new THREE.Scene();
 
-				const texture = new THREE.TextureLoader().load( 'assets/marbre.png' );
+				const texture = new THREE.TextureLoader().load( 'assets/gres.jpg' );
 
 				const cylinder = new THREE.CylinderBufferGeometry( 50, 50, 550, 320 );
 				const cube = new THREE.BoxBufferGeometry( 200, 50, 200 );
@@ -67,6 +68,15 @@
 					}
 
         }
+				let height = 75;
+				for (let i = 0 ; i < 4 ; ++i) {
+					let stair = new THREE.BoxBufferGeometry(1800 + i * 100, height, 3800 + i * 100)  ;
+					stairs[i] = new THREE.Mesh( stair, material ) ;
+					stairs[i].position.y = -(height * i) - 400 ;
+					stairs[i].position.x = 700 ;
+					stairs[i].position.z = -1800 ;
+					scene.add(stairs[i]) ;
+				}
 
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
