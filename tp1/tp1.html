@@ -13,18 +13,19 @@
 			import * as THREE from '../three.js-master/build/three.module.js';
 
 			let camera, scene, renderer;
-			let col, down_col, top_col, column, column2;
-      let arr = [];
+			let col, down_col, top_col, column, columns;
+      let arr = new Array(8).fill(new Array(18));
 
 			init();
 			animate();
 
 			function init() {
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 900;
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera.position.z = 2000;
         camera.position.y = 600;
-        camera.rotation.x = -0.5;
+        camera.rotation.x = -0.3;
+				camera.rotation.y = -0.5;
 
 				scene = new THREE.Scene();
 
@@ -42,13 +43,25 @@
 				column = new THREE.Group();
 				column.add(col, down_col, top_col);
 
-        arr[0] = column.clone();
-        scene.add(arr[0]);
+				let offset_x = 0;
+				let offset_z = 0;
 
-        for (let i = 1; i < 5; i++) {
-          arr[i] = arr[i-1].clone();
-          arr[i].position.x += 200;
-          scene.add(arr[i]);
+        for (let i = 0; i < 8; i++) {
+					for (let j = 0; j < 18; j++) {
+						if( (i===0 || i===7) && (j > 0 && j < 17) ){
+							arr[i][j] = column.clone();
+		          arr[i][j].position.z += offset_z;
+		          scene.add(arr[i][j]);
+						}
+						if( (j===0 || j===17) && (i >= 0 && i <= 7) ){
+							arr[i][j] = column.clone();
+		          arr[i][j].position.x += offset_x;
+		          scene.add(arr[i][j]);
+						}
+
+						offset_z = -200 * j;
+					}
+					offset_x = 200 * i;
         }
 
 
