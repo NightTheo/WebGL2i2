@@ -15,8 +15,9 @@
 			let camera, scene, renderer;
 			let arr_columns = new Array(8).fill(new Array(18));
 			let col, down_col, top_col, column, columns;
-	    let arr_stairs = new Array(3) ;
+	    	let arr_stairs = new Array(3) ;
 			let stairs;
+			let roof, roof_base, roof_mid, roof_top_r, roof_top_l ;
 			let center;
 
 
@@ -25,9 +26,9 @@
 
 			function init() {
 
-				
+
 				center = new THREE.Group();
-				
+
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 20000 );
 
 				scene = new THREE.Scene();
@@ -35,17 +36,18 @@
 
 				const texture = new THREE.TextureLoader().load( 'assets/gres.jpg' );
 
-				const cylinder = new THREE.CylinderBufferGeometry( 50, 50, 550, 320 );
-				const cube = new THREE.BoxBufferGeometry( 200, 50, 200 );
 				const material = new THREE.MeshBasicMaterial( { map: texture } );
 
 
 				//COLUMNS
+				const cylinder = new THREE.CylinderBufferGeometry( 50, 50, 850, 320 );
+				const cube = new THREE.BoxBufferGeometry( 200, 50, 200 );
+
 				col = new THREE.Mesh( cylinder, material );
 				down_col = new THREE.Mesh( cube, material );
 				top_col = new THREE.Mesh( cube, material );
-        		down_col.position.y -= 300;
-				top_col.position.y += 300;
+        		down_col.position.y -= 350;
+				top_col.position.y += 400;
 				column = new THREE.Group();
 				column.add(col, down_col, top_col);
 				columns = new THREE.Group();
@@ -65,7 +67,7 @@
 		          			columns.add(arr_columns[i][j]);
 						}
 						if(j===0 || j===17){
-							
+
 							arr_columns[i][j] = column.clone();
 		          			arr_columns[i][j].position.x = offset_x;
 							arr_columns[i][j].position.z = offset_z;
@@ -74,21 +76,50 @@
 
 					}
         		}
-					scene.add( columns );
+				scene.add( columns );
 
 
 				// STAIRS
 				stairs = new THREE.Group();
-				let height = 75;
-				for (let i = 0 ; i < 4 ; ++i) {
-					let stair = new THREE.BoxBufferGeometry(1800 + i * 100, height, 3800 + i * 100)  ;
+				let height = 30;
+				for (let i = 0 ; i < 6 ; ++i) {
+					let stair = new THREE.BoxBufferGeometry(1800 + i * 75, height, 3800 + i * 100)  ;
 					arr_stairs[i] = new THREE.Mesh( stair, material ) ;
 					arr_stairs[i].position.y = -(height * i) - 400 ;
 					arr_stairs[i].position.x = 700 ;
-					arr_stairs[i].position.z = -1800 ;
+					arr_stairs[i].position.z = -1700 ;
 					stairs.add(arr_stairs[i]) ;
 				}
 				scene.add( stairs );
+
+				//ROOF
+				roof = new THREE.Group() ;
+				let roof_block = new THREE.BoxBufferGeometry(1600, 200, 3600) ;
+				roof_base = new THREE.Mesh( roof_block, material ) ;
+				roof.add( roof_base ) ;
+
+				roof_block = new THREE.BoxBufferGeometry(1650, 50, 3650) ;
+				roof_mid = new THREE.Mesh(roof_block, material) ;
+				roof_mid.position.y += 100 ;
+				roof.add( roof_mid ) ;
+
+				offset_x = 380 ;
+				roof_block = new THREE.BoxBufferGeometry(831, 50, 3625) ;
+				roof_top_r = new THREE.Mesh( roof_block, material ) ;
+				roof_top_r.position.x += offset_x ;
+				roof_top_r.position.y += 250 ;
+				roof_top_r.rotation.z -= 3.5 ;
+				roof.add( roof_top_r ) ;
+				roof_top_l = new THREE.Mesh( roof_block, material ) ;
+				roof_top_l.position.x -= offset_x ;
+				roof_top_l.position.y += 250 ;
+				roof_top_l.rotation.z += 3.5 ;
+				roof.add( roof_top_l ) ;
+
+				roof.position.x = 700 ;
+				roof.position.z = -1700 ;
+				roof.position.y = 500 ;
+				scene.add( roof ) ;
 
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -121,11 +152,11 @@
 			}
 
 			function animate() {
-				
+
 				requestAnimationFrame( animate );
 
 
-				
+
 				renderer.render( scene, camera );
 
 			}
