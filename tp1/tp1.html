@@ -11,12 +11,13 @@
 		<script type="module">
 
 			import * as THREE from '../three.js-master/build/three.module.js';
-
+			import {OrbitControls} from '../three.js-master/examples/jsm/controls/OrbitControls.js';
 			let camera, scene, renderer;
 			let arr_columns = new Array(8).fill(new Array(18));
 			let col, down_col, top_col, column, columns;
 	    let arr_stairs = new Array(3) ;
 			let stairs;
+			let center;
 
 
 			init();
@@ -24,12 +25,13 @@
 
 			function init() {
 
+				
+				center = new THREE.Group();
+				
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 20000 );
-				camera.position.z = 2000;
-		    camera.position.y = 400;
-				camera.position.x = 600;
 
 				scene = new THREE.Scene();
+
 
 				const texture = new THREE.TextureLoader().load( 'assets/gres.jpg' );
 
@@ -42,7 +44,7 @@
 				col = new THREE.Mesh( cylinder, material );
 				down_col = new THREE.Mesh( cube, material );
 				top_col = new THREE.Mesh( cube, material );
-        down_col.position.y -= 300;
+        		down_col.position.y -= 300;
 				top_col.position.y += 300;
 				column = new THREE.Group();
 				column.add(col, down_col, top_col);
@@ -51,26 +53,28 @@
 				let offset_x = 0;
 				let offset_z = 0;
 				// rectangle of 8 x 18 columns
-        for (let i = 0; i < 8; i++) {
+        		for (let i = 0; i < 8; i++) {
 					offset_x = 200 * i;
 					for (let j = 0; j < 18; j++) {
 						offset_z = -200 * j;
 						if(i===0 || i===7) {
+
 							arr_columns[i][j] = column.clone();
 							arr_columns[i][j].position.x = offset_x;
-		          arr_columns[i][j].position.z = offset_z;
-		          columns.add(arr_columns[i][j]);
+		         			arr_columns[i][j].position.z = offset_z;
+		          			columns.add(arr_columns[i][j]);
 						}
 						if(j===0 || j===17){
+							
 							arr_columns[i][j] = column.clone();
-		          arr_columns[i][j].position.x = offset_x;
+		          			arr_columns[i][j].position.x = offset_x;
 							arr_columns[i][j].position.z = offset_z;
-		          columns.add(arr_columns[i][j]);
+		          			columns.add(arr_columns[i][j]);
 						}
 
 					}
-        }
-				scene.add( columns );
+        		}
+					scene.add( columns );
 
 
 				// STAIRS
@@ -91,8 +95,18 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
+				let controls = new OrbitControls( camera, renderer.domElement );
 
+				controls.enabledDamping = true;
+				controls.dampingFractor = 0.05;
+				controls.screenPanning = false;
 
+				controls.minDistance = 500;
+				controls.maxDistance = 5000;
+
+				controls.maxPolarAngle = Math.PI / 2;
+
+				controls.target = new THREE.Vector3(600,500,-1800);
 				window.addEventListener( 'resize', onWindowResize, false );
 
 			}
@@ -107,9 +121,11 @@
 			}
 
 			function animate() {
-
+				
 				requestAnimationFrame( animate );
 
+
+				
 				renderer.render( scene, camera );
 
 			}
