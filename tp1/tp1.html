@@ -41,6 +41,7 @@
 				createTemple();
 
 
+
 				document.body.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -194,24 +195,18 @@
 				let offset_x = 0;
 				let offset_z = 0;
 				// rectangle of 8 x 18 columns
-						for (let i = 0; i < 8; i++) {
-					offset_x = 200 * i;
-					for (let j = 0; j < 18; j++) {
-						offset_z = -200 * j;
-						if(i===0 || i===7) {
-							arr_columns[i][j] = column.clone();
-							arr_columns[i][j].position.x = offset_x;
-									arr_columns[i][j].position.z = offset_z;
-										columns.add(arr_columns[i][j]);
-						}
-						if(j===0 || j===17) {
-							arr_columns[i][j] = column.clone();
-										arr_columns[i][j].position.x = offset_x;
-							arr_columns[i][j].position.z = offset_z;
-										columns.add(arr_columns[i][j]);
+					for (let i = 0; i < 8; i++) {
+						offset_x = 200 * i;
+						for (let j = 0; j < 18; j++) {
+							offset_z = -200 * j;
+							if(i===0 || i===7 || j===0 || j===17) {
+								arr_columns[i][j] = column.clone();
+								arr_columns[i][j].position.x = offset_x;
+								arr_columns[i][j].position.z = offset_z;
+								columns.add(arr_columns[i][j]);
+							}
 						}
 					}
-						}
 				scene.add( columns );
 			}
 
