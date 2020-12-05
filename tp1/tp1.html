@@ -18,15 +18,18 @@
 			let columns;
 			let stairs;
 			let roof;
-			let ambientLight, light, lightHelper;
+			let spotLight, lightHelper, shadowCameraHelper;
 			let stone, outerStone, marble, base;
+
+
 
 			init();
 			animate();
 
 			//____INIT________________________________________________
 			function init() {
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 20000 );
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( 160, 40, 10 );
 				scene = new THREE.Scene();
 
 				// renderer & material
@@ -39,8 +42,6 @@
 
 				//	Temple
 				createTemple();
-
-
 
 				document.body.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -61,7 +62,8 @@
 
 			//____ANIMATE_________________________________________________
 			function animate() {
-
+				lightHelper.update();
+				shadowCameraHelper.update();
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 
@@ -81,6 +83,8 @@
 				renderer.shadowMap.enabled = true ;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				renderer.outputEncoding = THREE.sRGBEncoding;
+
+
 			}
 
 			function createControls(){
@@ -90,11 +94,12 @@
 				controls.dampingFactor = 0.05;
 				controls.screenPanning = false;
 
-				controls.minDistance = 500;
-				controls.maxDistance = 5000;
+				controls.minDistance = 20;
+				controls.maxDistance = 500;
 
 				controls.maxPolarAngle = Math.PI / 2;
-				controls.target = new THREE.Vector3(600,0,-1800);
+				//controls.target = new THREE.Vector3(600,0,-1800);
+				controls.target = new THREE.Vector3( 80, 0, -200 );
 			}
 
 
@@ -129,18 +134,39 @@
 				//---	Light ------------------------------------
 
 			function createLight () {
-				ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-				scene.add(ambientLight) ;
 
-				light = new THREE.SpotLight( 0xffffff, 1 );
-				light.position.set(0, 5000, -10000 );
-				light.castShadow = true;
 
-				lightHelper = new THREE.SpotLightHelper( light );
-				scene.add( lightHelper );
-				scene.add( light );
+				const ambient = new THREE.AmbientLight( 0xffffff, 0.1 );
+				scene.add( ambient );
+
+				spotLight = new THREE.SpotLight( 0xffffff, 1 );
+				spotLight.position.set( 15, 100, 200 );
+				spotLight.intensity = 3;
+				spotLight.angle = Math.PI / 4;
+				spotLight.penumbra = 0.1;
+				spotLight.decay = 2;
+				spotLight.distance = 600;
+
+				lightHelper = new THREE.SpotLightHelper( spotLight );
+				//scene.add( lightHelper );
+
+				lightShadow();
+
+				scene.add( spotLight );
 			}
 
+			function lightShadow(){
+				spotLight.castShadow = true;
+				spotLight.shadow.mapSize.width = 512;
+				spotLight.shadow.mapSize.height = 512;
+				spotLight.shadow.camera.near = 10;
+				spotLight.shadow.camera.far = 200;
+				spotLight.shadow.focus = 1;
+
+				shadowCameraHelper = new THREE.CameraHelper( spotLight.shadow.camera );
+				//scene.add( shadowCameraHelper );
+
+			}
 
 				//--- Mesh -----------------------------------------
 			/*
@@ -196,9 +222,9 @@
 				let offset_z = 0;
 				// rectangle of 8 x 18 columns
 					for (let i = 0; i < 8; i++) {
-						offset_x = 200 * i;
+						offset_x = 20 * i;
 						for (let j = 0; j < 18; j++) {
-							offset_z = -200 * j;
+							offset_z = -20 * j;
 							if(i===0 || i===7 || j===0 || j===17) {
 								arr_columns[i][j] = column.clone();
 								arr_columns[i][j].position.x = offset_x;
@@ -213,7 +239,7 @@
 			function setColumn(){
 				let col, top_col, column;
 
-				const cylinder = new THREE.CylinderBufferGeometry( 35, 60, 850, 10 );
+				const cylinder = new THREE.CylinderBufferGeometry( 3.5, 6, 85, 10 );
 
 				col = new THREE.Mesh( cylinder, marble );
 				col.castShadow = true ;
@@ -228,9 +254,9 @@
 				let top_col;
 
 				//SphereBufferGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
-				const sphere = new THREE.SphereBufferGeometry( 180, 4, 2, 3.14/4, 6.3, 0.2, 0.7);
+				const sphere = new THREE.SphereBufferGeometry( 18, 4, 2, 3.14/4, 6.3, 0.2, 0.7);
 				top_col = new THREE.Mesh( sphere, base );
-				top_col.position.y += 550;
+				top_col.position.y += 55;
 				top_col.rotation.x = Math.PI;
 				top_col.castShadow = true ;
 				return top_col;
@@ -242,21 +268,20 @@
 			function createStairs () {
 				let width ;
 				let depth ;
-				let height = 30;
+				let height = 3;
 				let arr_stairs = new Array(3) ;
 
 				stairs = new THREE.Group();
 				for (let i = 0 ; i < 6 ; ++i) {
-					width = 1800 + i * 75 ;
-					depth = 3800 + i * 100 ;
+					width = 180 + i * 7.5 ;
+					depth = 380 + i * 10 ;
 					arr_stairs[i] = createRectangleMesh(width, height, depth, stone, 0, 0, 0) ;
-					arr_stairs[i].position.y = -(height * i) - 400 ;
-					arr_stairs[i].position.x = 700 ;
-					arr_stairs[i].position.z = -1700 ;
-					arr_stairs[i].recieveShadow = true ;
+					arr_stairs[i].position.y = -(height * i) - 40 ;
+					arr_stairs[i].position.x = 70 ;
+					arr_stairs[i].position.z = -170 ;
+					arr_stairs[i].receiveShadow = true;
 					stairs.add(arr_stairs[i]) ;
 				}
-				stairs.recieveShadow = true ;
 				scene.add( stairs );
 			}
 
@@ -270,27 +295,27 @@
 				let offset_z = 0;
 				roof = new THREE.Group() ;
 
-				roof_base = createRectangleMesh(1600, 200, 3600, outerStone, 0, 0, 0) ;
+				roof_base = createRectangleMesh(160, 20, 360, outerStone, 0, 0, 0) ;
 				roof_base.castShadow = true ;
 				roof.add( roof_base ) ;
 
-				roof_mid = createRectangleMesh(1600, 50, 3650, outerStone, 0, 0, 0) ;
-				roof_mid.position.y += 100 ;
+				roof_mid = createRectangleMesh(160, 5, 365, outerStone, 0, 0, 0) ;
+				roof_mid.position.y += 10 ;
 				roof.add( roof_mid ) ;
 
 				//Roof angled pannels
-				offset_x = 380 ;
-				roof_top_r = createRectangleMesh(831, 50, 3625, stone, 0, 0, -3.5) ;
-				roof_top_r = addToPosition(roof_top_r, offset_x, 250, 0) ;
+				offset_x = 38 ;
+				roof_top_r = createRectangleMesh(83.1, 5, 362.5, stone, 0, 0, -3.5) ;
+				roof_top_r = addToPosition(roof_top_r, offset_x, 25, 0) ;
 				roof.add( roof_top_r ) ;
-				roof_top_l = createRectangleMesh(831, 50, 3625, stone, 0, 0, 3.5) ;
-				roof_top_l = addToPosition(roof_top_l, -offset_x, 250, 0) ;
+				roof_top_l = createRectangleMesh(83.1, 5, 362.5, stone, 0, 0, 3.5) ;
+				roof_top_l = addToPosition(roof_top_l, -offset_x, 25, 0) ;
 				roof.add( roof_top_l ) ;
 
 				roof_triangles();
 
 				//Roof setup
-				roof = addToPosition(roof, 700, 525, -1700) ;
+				roof = addToPosition(roof, 70, 52.5, -170) ;
 
 				roof.castShadow = true ;
 				scene.add( roof ) ;
@@ -300,9 +325,9 @@
 				let roof_pane_f, roof_pane_b, roof_pane ;
 
 				roof_pane = new THREE.Geometry();
-				let v1 = new THREE.Vector3(-800, 0, 0);
-				let v2 = new THREE.Vector3(800, 0, 0);
-				let v3 = new THREE.Vector3(0, 300, 0);
+				let v1 = new THREE.Vector3(-80, 0, 0);
+				let v2 = new THREE.Vector3(80, 0, 0);
+				let v3 = new THREE.Vector3(0, 30, 0);
 				let triangle = new THREE.Triangle(v1, v2, v3);
 				let normal = triangle.getNormal();
 				roof_pane.vertices.push(
@@ -313,10 +338,10 @@
 				roof_pane.faces.push(new THREE.Face3(0, 1, 2, normal));
 
 				roof_pane_f = new THREE.Mesh(roof_pane, stone);
-				roof_pane_f = addToPosition(roof_pane_f, 0, 100, 1800) ;
+				roof_pane_f = addToPosition(roof_pane_f, 0, 10, 180) ;
 				roof.add(roof_pane_f);
 				roof_pane_b = new THREE.Mesh(roof_pane, stone);
-				roof_pane_f = addToPosition(roof_pane_b, 0, 100, -1800) ;
+				roof_pane_f = addToPosition(roof_pane_b, 0, 10, -180) ;
 				roof_pane_b.rotation.y += Math.PI;
 				roof.add(roof_pane_b);
 			}
