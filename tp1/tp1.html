@@ -4,7 +4,6 @@
 		<title>three.js webgl - geometry - cube</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 	<body>
 
@@ -12,18 +11,17 @@
 
 			import * as THREE from '../three.js-master/build/three.module.js';
 			import {OrbitControls} from '../three.js-master/examples/jsm/controls/OrbitControls.js';
+			import { GUI } from '..//three.js-master/examples/jsm/libs/dat.gui.module.js';
 
 			let camera, scene, renderer;
-			let controls;
-			let columns;
-			let stairs;
-			let roof;
+			let controls, gui_light;
 			let spotLight, lightHelper, shadowCameraHelper;
 			let stone, outerStone, marble, base;
 
 
 
 			init();
+			buildGuiLight();
 			animate();
 
 			//____INIT________________________________________________
@@ -70,7 +68,6 @@
 			}
 
 
-
 			//____FUNCTIONS_________________________________________________
 
 				//---	Rendrer & OrbitControls -----------------
@@ -100,6 +97,61 @@
 				controls.maxPolarAngle = Math.PI / 2;
 				//controls.target = new THREE.Vector3(600,0,-1800);
 				controls.target = new THREE.Vector3( 80, 0, -200 );
+			}
+
+
+
+			//---	GUI --------------------------------------
+
+			function buildGuiLight(){
+				gui_light = new GUI();
+
+				const params = {
+					'light color': spotLight.color.getHex(),
+					intensity: spotLight.intensity,
+					distance: spotLight.distance,
+					angle: spotLight.angle,
+					penumbra: spotLight.penumbra,
+					decay: spotLight.decay,
+					focus: spotLight.shadow.focus
+				};
+
+				gui_light.addColor( params, 'light color' ).onChange( function ( val ) {
+					spotLight.color.setHex( val );
+					animate();
+				} );
+
+				gui_light.add( params, 'intensity', 0, 2 ).onChange( function ( val ) {
+					spotLight.intensity = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'distance', 50, 600 ).onChange( function ( val ) {
+					spotLight.distance = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
+					spotLight.angle = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
+					spotLight.penumbra = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
+					spotLight.decay = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
+					spotLight.shadow.focus = val;
+					animate();
+				} );
+
+				gui_light.open();
 			}
 
 
@@ -160,7 +212,7 @@
 				spotLight.shadow.mapSize.width = 512;
 				spotLight.shadow.mapSize.height = 512;
 				spotLight.shadow.camera.near = 10;
-				spotLight.shadow.camera.far = 200;
+				spotLight.shadow.camera.far = 600;
 				spotLight.shadow.focus = 1;
 
 				shadowCameraHelper = new THREE.CameraHelper( spotLight.shadow.camera );
@@ -280,11 +332,11 @@
 				//--- Stairs ----------------------------------------
 
 			function createStairs () {
+				let arr_stairs = new Array(3) ;
 				let width, depth;
 				let height = 3;
-				let arr_stairs = new Array(3) ;
 
-				stairs = new THREE.Group();
+				let stairs = new THREE.Group();
 				for (let i = 0 ; i < 6 ; ++i) {
 					width = 180 + i * 7.5 ;
 					depth = 380 + i * 10 ;
@@ -304,7 +356,7 @@
 
 				let offset_x = 0;
 				let offset_z = 0;
-				roof = new THREE.Group() ;
+				let roof = new THREE.Group() ;
 
 				roof_base = createRectangleMesh(160, 20, 360, outerStone, 0, 0, 0) ;
 				shadow(roof_base);
@@ -325,22 +377,23 @@
 				shadow(roof_top_l);
 				roof.add( roof_top_l ) ;
 
-				roof_triangles();
+				roof_triangles(roof);
 
 				//Roof setup
 				roof = addToPosition(roof, 70, 52.5, -170) ;
 				scene.add( roof ) ;
 			}
 
-			function roof_triangles(){
+			function roof_triangles(roof){
 				let roof_pane_f, roof_pane_b, roof_pane ;
 
 				roof_pane = new THREE.Geometry();
 				let v1 = new THREE.Vector3(-80, 0, 0);
 				let v2 = new THREE.Vector3(80, 0, 0);
 				let v3 = new THREE.Vector3(0, 30, 0);
+				let center = new THREE.Vector3(0, 15, 0);
 				let triangle = new THREE.Triangle(v1, v2, v3);
-				let normal = triangle.getNormal();
+				let normal = triangle.getNormal(center);
 				roof_pane.vertices.push(
 					triangle.a,
 					triangle.b,
