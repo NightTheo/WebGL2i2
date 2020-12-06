@@ -168,6 +168,11 @@
 
 			}
 
+			function shadow(obj){
+				obj.castShadow = true ;
+				obj.receiveShadow = true;
+			}
+
 				//--- Mesh -----------------------------------------
 			/*
 			Creates a mesh from a box geometry
@@ -217,7 +222,6 @@
 				column = setColumn();
 
 				columns = new THREE.Group();
-
 				let offset_x = 0;
 				let offset_z = 0;
 				// rectangle of 8 x 18 columns
@@ -239,10 +243,10 @@
 			function setColumn(){
 				let col, top_col, column;
 
-				const cylinder = new THREE.CylinderBufferGeometry( 3.5, 6, 85, 10 );
+				const cylinder = new THREE.CylinderBufferGeometry( 4, 6, 85, 10 );
 
 				col = new THREE.Mesh( cylinder, marble );
-				col.castShadow = true ;
+				shadow(col);
 
 				top_col = setTopColumn();
 				column = new THREE.Group().add(col, top_col);
@@ -251,23 +255,32 @@
 			}
 
 			function setTopColumn(){
-				let top_col;
+				let slab, down_slab, base_top_col;
+
+				slab = createRectangleMesh(17, 2, 17, base, 0, 0, 0);
+				slab.position.y += 42;
+				shadow(slab);
 
 				//SphereBufferGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
-				const sphere = new THREE.SphereBufferGeometry( 18, 4, 2, 3.14/4, 6.3, 0.2, 0.7);
-				top_col = new THREE.Mesh( sphere, base );
-				top_col.position.y += 55;
-				top_col.rotation.x = Math.PI;
-				top_col.castShadow = true ;
-				return top_col;
+				const sphere = new THREE.SphereBufferGeometry( 18, 4, 2, 3.14/4, 6.3, 0.2, 0.5);
+				down_slab = new THREE.Mesh( sphere, base );
+				down_slab.position.y += 55;
+				down_slab.rotation.x = Math.PI;
+				shadow(down_slab);
+
+				const cylinder = new THREE.CylinderBufferGeometry( 5, 5, 2, 15 );
+				base_top_col = new THREE.Mesh( cylinder, base );
+				base_top_col.position.y = 37;
+				shadow(base_top_col);
+
+				return new THREE.Group().add(slab, down_slab, base_top_col);
 			}
 
 
 				//--- Stairs ----------------------------------------
 
 			function createStairs () {
-				let width ;
-				let depth ;
+				let width, depth;
 				let height = 3;
 				let arr_stairs = new Array(3) ;
 
@@ -276,10 +289,8 @@
 					width = 180 + i * 7.5 ;
 					depth = 380 + i * 10 ;
 					arr_stairs[i] = createRectangleMesh(width, height, depth, stone, 0, 0, 0) ;
-					arr_stairs[i].position.y = -(height * i) - 40 ;
-					arr_stairs[i].position.x = 70 ;
-					arr_stairs[i].position.z = -170 ;
-					arr_stairs[i].receiveShadow = true;
+					arr_stairs[i].position.set( 70, -(height * i) - 40, -170);
+					shadow(arr_stairs[i]);
 					stairs.add(arr_stairs[i]) ;
 				}
 				scene.add( stairs );
@@ -296,7 +307,7 @@
 				roof = new THREE.Group() ;
 
 				roof_base = createRectangleMesh(160, 20, 360, outerStone, 0, 0, 0) ;
-				roof_base.castShadow = true ;
+				shadow(roof_base);
 				roof.add( roof_base ) ;
 
 				roof_mid = createRectangleMesh(160, 5, 365, outerStone, 0, 0, 0) ;
@@ -307,17 +318,17 @@
 				offset_x = 38 ;
 				roof_top_r = createRectangleMesh(83.1, 5, 362.5, stone, 0, 0, -3.5) ;
 				roof_top_r = addToPosition(roof_top_r, offset_x, 25, 0) ;
+				shadow(roof_top_r);
 				roof.add( roof_top_r ) ;
 				roof_top_l = createRectangleMesh(83.1, 5, 362.5, stone, 0, 0, 3.5) ;
 				roof_top_l = addToPosition(roof_top_l, -offset_x, 25, 0) ;
+				shadow(roof_top_l);
 				roof.add( roof_top_l ) ;
 
 				roof_triangles();
 
 				//Roof setup
 				roof = addToPosition(roof, 70, 52.5, -170) ;
-
-				roof.castShadow = true ;
 				scene.add( roof ) ;
 			}
 
@@ -339,10 +350,13 @@
 
 				roof_pane_f = new THREE.Mesh(roof_pane, stone);
 				roof_pane_f = addToPosition(roof_pane_f, 0, 10, 180) ;
+				shadow(roof_pane_f);
+
 				roof.add(roof_pane_f);
 				roof_pane_b = new THREE.Mesh(roof_pane, stone);
 				roof_pane_f = addToPosition(roof_pane_b, 0, 10, -180) ;
 				roof_pane_b.rotation.y += Math.PI;
+				shadow(roof_pane_b);
 				roof.add(roof_pane_b);
 			}
 
