@@ -18,7 +18,7 @@
 			let camera, scene, renderer;
 			let controls, gui_light;
 			let spotLight, lightHelper, shadowCameraHelper;
-			let stone, outerStone, marble, base;
+			let stone, outerStone, marble, base, ground;
 
 
 			//	CALL FUNCTIONS
@@ -34,7 +34,7 @@
 			//____INIT________________________________________________
 			function init() {
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.set( 160, 40, 10 );
+				camera.position.set( 160, 40, 200 );
 				scene = new THREE.Scene();
 
 				// renderer & material
@@ -47,6 +47,7 @@
 
 				//	Temple
 				createTemple();
+
 
 				document.body.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -67,8 +68,8 @@
 
 			//____ANIMATE_________________________________________________
 			function animate() {
-				lightHelper.update();
-				shadowCameraHelper.update();
+				//lightHelper.update();
+				//shadowCameraHelper.update();
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 
@@ -105,60 +106,6 @@
 
 
 
-			//---	GUI --------------------------------------
-
-			function buildGuiLight(){
-				gui_light = new GUI();
-
-				const params = {
-					'light color': spotLight.color.getHex(),
-					intensity: spotLight.intensity,
-					distance: spotLight.distance,
-					angle: spotLight.angle,
-					penumbra: spotLight.penumbra,
-					decay: spotLight.decay,
-					focus: spotLight.shadow.focus
-				};
-
-				gui_light.addColor( params, 'light color' ).onChange( function ( val ) {
-					spotLight.color.setHex( val );
-					animate();
-				} );
-
-				gui_light.add( params, 'intensity', 0, 2 ).onChange( function ( val ) {
-					spotLight.intensity = val;
-					animate();
-				} );
-
-				gui_light.add( params, 'distance', 50, 600 ).onChange( function ( val ) {
-					spotLight.distance = val;
-					animate();
-				} );
-
-				gui_light.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
-					spotLight.angle = val;
-					animate();
-				} );
-
-				gui_light.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
-					spotLight.penumbra = val;
-					animate();
-				} );
-
-				gui_light.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
-					spotLight.decay = val;
-					animate();
-				} );
-
-				gui_light.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
-					spotLight.shadow.focus = val;
-					animate();
-				} );
-
-				gui_light.open();
-			}
-
-
 				//---	Materials --------------------------------
 
 			function createMaterials(){
@@ -166,6 +113,7 @@
 				outerStone = createPhongMaterial('assets_low/stone.jpg', 5, 1 );
 				marble = createPhongMaterial( 'assets_low/column.jpg', 1.3, 1 );
 				base = createPhongMaterial( 'assets_low/base.png', 1, 1 );
+				ground = createPhongMaterial( 'assets_low/sand.jpg', 70, 70 );
 			}
 
 			function createPhongMaterial(textureName, repeat_x, repeat_y){
@@ -173,7 +121,8 @@
 				const texture = loader.load( textureName );
 				texture.wrapS = THREE.RepeatWrapping ;
 				texture.wrapT = THREE.RepeatWrapping;
-				texture.repeat.set( repeat_x, repeat_y );
+				if(repeat_x && repeat_y)
+					texture.repeat.set( repeat_x, repeat_y );
 				return new THREE.MeshPhongMaterial( { map: texture} );
 			}
 
@@ -182,16 +131,16 @@
 			function createLight () {
 
 
-				const ambient = new THREE.AmbientLight( 0xffffff, 0.1 );
+				const ambient = new THREE.AmbientLight( 0xffffff, 0.2 );
 				scene.add( ambient );
 
-				spotLight = new THREE.SpotLight( 0xffffff, 1 );
+				spotLight = new THREE.SpotLight( 0xe6b253);
 				spotLight.position.set( 15, 100, 200 );
-				spotLight.intensity = 2;
-				spotLight.angle = Math.PI / 4;
-				spotLight.penumbra = 0.1;
+				spotLight.intensity = 1;
+				spotLight.angle = 1;
+				spotLight.penumbra = 1;
 				spotLight.decay = 2;
-				spotLight.distance = 600;
+				spotLight.distance = 1000;
 
 				lightHelper = new THREE.SpotLightHelper( spotLight );
 				//scene.add( lightHelper );
@@ -218,6 +167,7 @@
 				obj.castShadow = true ;
 				obj.receiveShadow = true;
 			}
+
 
 				//--- Mesh -----------------------------------------
 			/*
@@ -339,6 +289,7 @@
 					shadow(arr_stairs[i]);
 					stairs.add(arr_stairs[i]) ;
 				}
+
 				scene.add( stairs );
 			}
 
@@ -406,6 +357,71 @@
 				shadow(roof_pane_b);
 				roof.add(roof_pane_b);
 			}
+
+
+			//---	GUI --------------------------------------
+
+			function buildGuiLight(){
+				gui_light = new GUI();
+
+				const params = {
+					'light color': spotLight.color.getHex(),
+					intensity: spotLight.intensity,
+					distance: spotLight.distance,
+					angle: spotLight.angle,
+					penumbra: spotLight.penumbra,
+					decay: spotLight.decay,
+					focus: spotLight.shadow.focus
+				};
+
+				gui_light.addColor( params, 'light color' ).onChange( function ( val ) {
+					spotLight.color.setHex( val );
+					animate();
+				} );
+
+				gui_light.add( params, 'intensity', 0, 2 ).onChange( function ( val ) {
+					spotLight.intensity = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'distance', 50, 1000 ).onChange( function ( val ) {
+					spotLight.distance = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
+					spotLight.angle = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
+					spotLight.penumbra = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
+					spotLight.decay = val;
+					animate();
+				} );
+
+				gui_light.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
+					spotLight.shadow.focus = val;
+					animate();
+				} );
+
+				gui_light.open();
+			}
+
+
+			//########		ENVIRONMENT		############################
+
+
+
+
+			//####	class  ##############################################
+
+
+
 
 
 		</script>
