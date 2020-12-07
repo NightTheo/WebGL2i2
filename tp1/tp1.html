@@ -49,6 +49,8 @@
 				//	Temple
 				createTemple();
 
+				//Environnement
+				createPlane();
 
 				document.body.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -178,7 +180,7 @@
 				let loader = new THREE.TextureLoader();
 				const texture = loader.load( textureName );
 				texture.wrapS = THREE.RepeatWrapping ;
-				texture.wrapT = THREE.RepeatWrapping;
+				texture.wrapT = THREE.RepeatWrapping ;
 				if(repeat_x && repeat_y)
 					texture.repeat.set( repeat_x, repeat_y );
 				return new THREE.MeshPhongMaterial( { map: texture} );
@@ -193,12 +195,12 @@
 				scene.add( ambient );
 
 				spotLight = new THREE.SpotLight( 0xe6b253);
-				spotLight.position.set( 15, 100, 200 );
-				spotLight.intensity = 1;
+				spotLight.position.set( 15, 100, 600 );
+				spotLight.intensity = 3;
 				spotLight.angle = 1;
 				spotLight.penumbra = 1;
 				spotLight.decay = 2;
-				spotLight.distance = 1000;
+				spotLight.distance = 2000;
 
 				lightHelper = new THREE.SpotLightHelper( spotLight );
 				//scene.add( lightHelper );
@@ -213,7 +215,7 @@
 				spotLight.shadow.mapSize.width = 512;
 				spotLight.shadow.mapSize.height = 512;
 				spotLight.shadow.camera.near = 10;
-				spotLight.shadow.camera.far = 600;
+				spotLight.shadow.camera.far = 1000;
 				spotLight.shadow.focus = 1;
 
 				shadowCameraHelper = new THREE.CameraHelper( spotLight.shadow.camera );
@@ -418,7 +420,14 @@
 
 
 			//########		ENVIRONMENT		############################
+			function createPlane(){
+				let floor;
+				floor = createRectangleMesh(10000,0.1,10000,ground,0,0,0);
+				addToPosition(floor,0,-50,0);
+				floor.receiveShadow = true;
+				scene.add(floor);
 
+			}
 
 
 
