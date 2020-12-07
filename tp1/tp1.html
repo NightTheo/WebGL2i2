@@ -85,8 +85,12 @@
 				renderer.shadowMap.enabled = true ;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				renderer.outputEncoding = THREE.sRGBEncoding;
+			}
 
-
+			function render(){
+				lightHelper.update();
+				shadowCameraHelper.update();
+				renderer.render( scene, camera );
 			}
 
 			function createControls(){
@@ -122,41 +126,42 @@
 
 				gui_light.addColor( params, 'light color' ).onChange( function ( val ) {
 					spotLight.color.setHex( val );
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'intensity', 0, 2 ).onChange( function ( val ) {
 					spotLight.intensity = val;
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'distance', 50, 600 ).onChange( function ( val ) {
 					spotLight.distance = val;
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
 					spotLight.angle = val;
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
 					spotLight.penumbra = val;
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
 					spotLight.decay = val;
-					animate();
+					render();
 				} );
 
 				gui_light.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
 					spotLight.shadow.focus = val;
-					animate();
+					render();
 				} );
 
 				gui_light.open();
 			}
+
 
 
 				//---	Materials --------------------------------
