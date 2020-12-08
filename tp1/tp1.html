@@ -12,14 +12,16 @@
 
 			// IMPORTS
 			import * as THREE from '../three.js-master/build/three.module.js';
+			import { OBJLoader2 } from "../three.js-master/examples/jsm/loaders/OBJLoader2.js";
 			import {OrbitControls} from '../three.js-master/examples/jsm/controls/OrbitControls.js';
-			import { GUI } from '..//three.js-master/examples/jsm/libs/dat.gui.module.js';
+			import { GUI } from '../three.js-master/examples/jsm/libs/dat.gui.module.js';
 
 			//	VARIABLES
 			let camera, scene, renderer;
 			let controls, gui_light;
 			let spotLight, lightHelper, shadowCameraHelper;
 			let stone, outerStone, marble, base, ground;
+			let magic, backLight;
 
 
 			//	CALL FUNCTIONS
@@ -220,18 +222,33 @@
 				spotLight.decay = 2;
 				spotLight.distance = 2000;
 
-				//lightHelper = new THREE.SpotLightHelper( spotLight );
-				//scene.add( lightHelper );
+				backLight = new THREE.SpotLight( 0xffb253);
+				backLight.position.set( 70, -10, -200 );
+				backLight.intensity = 1;
+				backLight.angle = 1;
+				backLight.penumbra = 1;
+				backLight.decay = 2;
+				backLight.distance = 200;
 
-				lightShadow();
+				let targetObject = new THREE.Object3D();
+				targetObject.position.set(70, 10, -230)
+				scene.add(targetObject);
+				backLight.target = targetObject;
+
+				// lightHelper = new THREE.SpotLightHelper( backLight );
+				// scene.add( lightHelper );
+
+				lightShadow(spotLight);
+				lightShadow(backLight);
 
 				scene.add( spotLight );
+				scene.add( backLight );
 			}
 
 			/*
 			Sets the shadow parameters for the spotLight
 			*/
-			function lightShadow(){
+			function lightShadow(spotLight){
 				spotLight.castShadow = true;
 				spotLight.shadow.camera.near = 10;
 				spotLight.shadow.camera.far = 1000;
@@ -289,6 +306,7 @@
 				createColumns();
 				createStairs();
 				createRoof();
+				createMagicObject() ;
 			}
 
 				//---	Columns ------------------------------------
@@ -408,7 +426,7 @@
 				let offset_z = 0;
 				let roof = new THREE.Group() ;
 
-				roof_base = createRectangleMesh(160, 20, 360, outerStone, 0, 0, 0) ;
+				roof_base = createRectangleMesh(160, 20, 360, stone, 0, 0, 0) ;
 				shadow(roof_base);
 				roof.add( roof_base ) ;
 
@@ -467,6 +485,26 @@
 			}
 
 
+			//########		MAGIC OBJECT	############################
+			function createMagicObject () {
+				let loader = new OBJLoader2();
+
+				// function called on successful load
+				function callbackOnLoad ( arachne ) {
+					arachne.scale.set(5, 5, 5) ;
+					addToPosition(arachne, 70, -3, -230) ;
+					shadow(arachne) ;
+					shadow(arachne.children[0]) ;
+					shadow(arachne.children[1]) ;
+					scene.add( arachne );
+				}
+
+				// load a resource from provided URL synchronously
+				loader.load( 'assets_low/arachne.obj', callbackOnLoad, null, null, null );
+
+				console.log(loader) ;
+			}
+
 			//########		ENVIRONMENT		############################
 			function createPlane(){
 				let floor;
@@ -474,9 +512,7 @@
 				addToPosition(floor,0,-57,0);
 				floor.receiveShadow = true;
 				scene.add(floor);
-
 			}
-			
 		</script>
 
 	</body>
