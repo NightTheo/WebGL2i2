@@ -21,9 +21,8 @@
 			let controls, gui_light;
 			let spotLight, lightHelper, shadowCameraHelper;
 			let stone, outerStone, marble, base, ground;
-			let magic, backLight;
-
-
+			let magic, backLight, backLights;
+			
 			//	CALL FUNCTIONS
 			init();
 			buildGuiLight();
@@ -222,27 +221,37 @@
 				spotLight.decay = 2;
 				spotLight.distance = 2000;
 
-				backLight = new THREE.SpotLight( 0xffb253);
-				backLight.position.set( 70, -10, -200 );
-				backLight.intensity = 1;
-				backLight.angle = 1;
-				backLight.penumbra = 1;
-				backLight.decay = 2;
-				backLight.distance = 200;
+				backLights = new THREE.Group();
+				for(let i = 0; i < 3; ++i){
 
-				let targetObject = new THREE.Object3D();
-				targetObject.position.set(70, 10, -230)
-				scene.add(targetObject);
-				backLight.target = targetObject;
+					backLight = new THREE.SpotLight( 0xffb253);
+					backLight.position.set( 50 + 20 * i, -10, -200 );
+					backLight.intensity = 0.5;
+					backLight.angle = 1;
+					backLight.penumbra = 1;
+					backLight.decay = 2;
+					backLight.distance = 200;
 
-				// lightHelper = new THREE.SpotLightHelper( backLight );
-				// scene.add( lightHelper );
+					lightShadow(backLight);
+
+					let targetObject = new THREE.Object3D();
+					targetObject.position.set(70, 10, -230)
+					scene.add(targetObject);
+					backLight.target = targetObject;
+
+					backLights.add( backLight );
+					
+					
+
+				}
+				//scene.add( lightHelper );
+				//lightHelper = new THREE.SpotLightHelper( backLight );
 
 				lightShadow(spotLight);
-				lightShadow(backLight);
+				
 
 				scene.add( spotLight );
-				scene.add( backLight );
+				scene.add(backLights);
 			}
 
 			/*
@@ -497,12 +506,57 @@
 					shadow(arachne.children[0]) ;
 					shadow(arachne.children[1]) ;
 					scene.add( arachne );
+					guiArachne(arachne);
 				}
 
 				// load a resource from provided URL synchronously
 				loader.load( 'assets_low/arachne.obj', callbackOnLoad, null, null, null );
 
 				console.log(loader) ;
+			}
+
+			function guiArachne(arachne){
+				let gui_arachne = new GUI();
+				
+
+				const params = {
+					'arachne color': arachne.children[0].material.color.getHex(),
+					roughness: arachne.children[0].material.roughness,
+					metalness: arachne.children[0].material.metalness,
+					scale: arachne.scale.x,
+					position_X: arachne.position.x,
+					position_Z: arachne.position.z,
+					
+				};
+				
+				gui_arachne.addColor( params, 'arachne color').onChange( function ( val ) {
+					arachne.children[0].material.color.setHex( val );
+					render();
+				} );
+				gui_arachne.add( params, 'roughness',0,1 ).onChange( function ( val ) {
+					arachne.children[0].material.roughness = val;
+					render();
+				} );
+				gui_arachne.add( params, 'metalness',0,1 ).onChange( function ( val ) {
+					arachne.children[0].material.metalness = val;
+					render();
+				} );
+				gui_arachne.add( params, 'scale',1,6 ).onChange( function ( val ) {
+					arachne.scale.x = val;
+					arachne.scale.y = val;
+					arachne.scale.z = val;
+					arachne.position.y = val * 13/2 -37 ;
+					render();
+				} );
+				gui_arachne.add( params, 'position_X',40,110 ).onChange( function ( val ) {
+					arachne.position.x = val ;
+					render();
+				} );
+				gui_arachne.add( params, 'position_Z',-250,-40 ).onChange( function ( val ) {
+					arachne.position.z = val ;
+					render();
+				} );
+
 			}
 
 			//########		ENVIRONMENT		############################
