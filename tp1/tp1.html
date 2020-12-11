@@ -2,11 +2,16 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - geometry - cube</title>
+		<title>TP3</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 	<body>
+
+		<div id="info">
+			<p>Greek Temple</p><p>Yanis Tagri, Nathan Letourneau, Theo Omnes, Sarah Schlegel</p>
+		</div>
 
 		<script type="module">
 
@@ -22,7 +27,7 @@
 			let spotLight, lightHelper, shadowCameraHelper;
 			let stone, outerStone, marble, base, ground, stoneRoofMid,stonePanels;
 			let magic, backLight, backLights;
-			
+
 			//	CALL FUNCTIONS
 			init();
 			buildGuiLight();
@@ -242,15 +247,15 @@
 					backLight.target = targetObject;
 
 					backLights.add( backLight );
-					
-					
+
+
 
 				}
 				//scene.add( lightHelper );
 				//lightHelper = new THREE.SpotLightHelper( backLight );
 
 				lightShadow(spotLight);
-				
+
 
 				scene.add( spotLight );
 				scene.add(backLights);
@@ -519,7 +524,7 @@
 
 			function guiArachne(arachne){
 				let gui_arachne = new GUI();
-				
+
 
 				const params = {
 					'arachne color': arachne.children[0].material.color.getHex(),
@@ -528,9 +533,9 @@
 					scale: arachne.scale.x,
 					position_X: arachne.position.x,
 					position_Z: arachne.position.z,
-					
+
 				};
-				
+
 				gui_arachne.addColor( params, 'arachne color').onChange( function ( val ) {
 					arachne.children[0].material.color.setHex( val );
 					render();
