@@ -9,6 +9,9 @@
 	</head>
 	<body>
 		<div id="container"></div>
+		<div id="overlay">
+			<button id="startButton">Play</button>
+		</div>
 		<div id="info">
 			<p>Greek Temple</p><p>Yanis Tagri, Nathan Letourneau, Theo Omnes, Sarah Schlegel</p>
 		</div>
@@ -24,16 +27,17 @@
 			//	VARIABLES
 			let camera, scene, renderer;
 			let controls, gui_light;
-			let spotLight, lightHelper, shadowCameraHelper;
-			let stone, outerStone, marble, base, ground, stoneRoofMid,stonePanels;
-			let magic, backLight, backLights;
+			let spotLight, lightHelper, shadowCameraHelper;														// main light
+			let stone, outerStone, marble, base, ground, stoneRoofMid,stonePanels;		// materials
+			let magic, backLight, backLights;																					// magic object's lights
 			let stats, clock;
 			let sky, sun;
 
-			//	CALL FUNCTIONS
-			init();
-			buildGuiLight();
-			animate();
+			clock = new THREE.Clock();
+
+			// OVERLAY
+			const startButton = document.getElementById( 'startButton' );
+			startButton.addEventListener( 'click', init );
 
 
 
@@ -47,11 +51,15 @@
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
 				camera.position.set( 160, 40, 200 );
 				scene = new THREE.Scene();
-				clock = new THREE.Clock();
+
 
 				//stats fps
 				stats = new Stats();
 				container.appendChild( stats.dom );
+
+				//overlay
+				const overlay = document.getElementById( 'overlay' );
+				overlay.remove();
 
 				// Renderer & material
 				setRenderer();
@@ -68,6 +76,9 @@
 				//  Environnement
 				createPlane();
 				initSky();
+
+				buildGuiLight();
+				animate();
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
