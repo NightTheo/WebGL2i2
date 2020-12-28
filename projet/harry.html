@@ -36,12 +36,13 @@
 			let stats, clock, time;
 			let sky, sun, effectController;
 			let analyser;
-			let stairsGrp, stairsNb = 0, platforms;
+			let stairsGrp, stairsNb, pattern, patternNb;
 			let room ;
 
             clock = new THREE.Clock();
 			stairsGrp = new Array() ;
-			platforms = new Array() ;
+			pattern = new Array() ;
+			patternNb = 2 ;
 
             // OVERLAY
 			const startButton = document.getElementById( 'startButton' );
@@ -118,12 +119,14 @@
 
 				let axis = new THREE.Vector3(0, 1, 0) ;
 				time += delta ;
-				for (let i = 0 ; i < stairsNb ; ++i) {
-					if (rotationDirection() == 1)
-						rotateAroundPoint(stairsGrp[i].stairs, stairsGrp[i].rotPoint, axis, stairsGrp[i].rotDirection * delta / 2) ;
-					else if (rotationDirection() == -1)
-						rotateAroundPoint(stairsGrp[i].stairs, stairsGrp[i].rotPoint, axis, stairsGrp[i].rotDirection * (-delta) / 2) ;
+				for (let i = 0 ; i < patternNb ; ++i) {
+					for (let j = 0 ; j < pattern[i].nb ; ++j) {
+						if (rotationDirection() == 1)
+							rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * delta / 2) ;
+						else if (rotationDirection() == -1)
+							rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * (-delta) / 2) ;
 					}
+				}
             }
 
 			function rotationDirection () {
@@ -330,89 +333,125 @@
 			function createStairwell () {
 				let heightOffset = 60 ;
 
-				let zFrontStair = 200 ;
-				let zBackStair = -60 ;
-				let xRightStair = 230 ;
-				let xLateralStair = 340 ;
-
 				let zFrontPlatform = 130 ;
 				let xRightPlatform = 270 ;
 
-				stairsGrp[0] = {
-					stairs: createStairs(20, xLateralStair, -25, zBackStair - 30, 0, -Math.PI, 0),
-					platform: createPlatform(xRightPlatform, -55, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55, -zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				stairsGrp[1] = {
-					stairs: createStairs(20, xRightStair, -25 + 1 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
-					platform: createPlatform(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				stairsGrp[2] = {
-					stairs: createStairs(20, -30, -25 + 2 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
-					platform: createPlatform(0, -55 + 2 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, zFrontPlatform),
-					rotDirection: -1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
+				pattern[0] = {
+					stairsBlock : createStairsGrp(heightOffset),
+					nb : 7,
+					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
+					floor: 0
 				} ;
 
-				stairsGrp[3] = {
-					stairs: createStairs(20, -xLateralStair, -25, zFrontStair - 110, 0, 0, 0),
-					platform: createPlatform(-xRightPlatform, -55, zFrontPlatform),
-					rotPoint: new THREE.Vector3(-xRightPlatform, -55, zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
+				pattern[1] = {
+					stairsBlock : createStairsGrp(heightOffset),
+					nb : 7,
+					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
+					floor: 4
+				}
 
-				stairsGrp[4] = {
-					stairs: createStairs(20, -xRightStair, -25 + 1 * heightOffset, -zFrontStair, 0, -Math.PI/2, 0),
-					platform: createPlatform(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
+				alterPattern(pattern[1], heightOffset, Math.PI) ;
 
-				stairsGrp[5] = {
-					stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 30, 0, -Math.PI, 0),
-					platform: createPlatform(0, -55 + 2 * heightOffset, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, -zFrontPlatform),
-					rotDirection: 1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				stairsGrp[6] = {
-					stairs: createStairs(20, xLateralStair, -25 + 3 * heightOffset, zBackStair - 40, 0, Math.PI, 0),
-					platform: createPlatform(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
-					rotDirection: 1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
+				for (let j = 0 ; j < 2 ; ++j) {
+					for (let i = 0 ; i < 2 ; ++i) {
+						scene.add(pattern[j].platforms[i]) ;
+					}
 
-				stairsNb = 7 ;
-
-				createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset) ;
-
-				for (let i = 0 ; i < stairsNb ; ++i) {
-					scene.add(stairsGrp[i].stairs, stairsGrp[i].platform) ;
+					for (let i = 0 ; i < pattern[j].nb ; ++i) {
+						scene.add(pattern[j].stairsBlock[i].stairs, pattern[j].stairsBlock[i].platform) ;
+					}
 				}
 			}
 
+		function createStairsGrp(heightOffset) {
+			let grp = new THREE.Group() ;
+
+			let zFrontStair = 200 ;
+			let zBackStair = -60 ;
+			let xRightStair = 230 ;
+			let xLateralStair = 340 ;
+
+			let zFrontPlatform = 130 ;
+			let xRightPlatform = 270 ;
+
+			grp[0] = {
+				stairs: createStairs(20, xLateralStair, -25, zBackStair - 30, 0, -Math.PI, 0),
+				platform: createPlatform(xRightPlatform, -55, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55, -zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			grp[1] = {
+				stairs: createStairs(20, xRightStair, -25 + 1 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
+				platform: createPlatform(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			grp[2] = {
+				stairs: createStairs(20, -30, -25 + 2 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
+				platform: createPlatform(0, -55 + 2 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, zFrontPlatform),
+				rotDirection: -1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[3] = {
+				stairs: createStairs(20, -xLateralStair, -25, zFrontStair - 110, 0, 0, 0),
+				platform: createPlatform(-xRightPlatform, -55, zFrontPlatform),
+				rotPoint: new THREE.Vector3(-xRightPlatform, -55, zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[4] = {
+				stairs: createStairs(20, -xRightStair, -25 + 1 * heightOffset, -zFrontStair, 0, -Math.PI/2, 0),
+				platform: createPlatform(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[5] = {
+				stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 30, 0, -Math.PI, 0),
+				platform: createPlatform(0, -55 + 2 * heightOffset, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, -zFrontPlatform),
+				rotDirection: 1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			grp[6] = {
+				stairs: createStairs(20, xLateralStair, -25 + 3 * heightOffset, zBackStair - 40, 0, Math.PI, 0),
+				platform: createPlatform(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
+				rotDirection: 1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			return grp ;
+		}
+
+		function alterPattern (pattern, off_y, angle) {
+			for (let i = 0 ; i < pattern.nb ; ++i) {
+				pattern.stairsBlock.rotation.y += angle ;
+				pattern.stairsBlock[i].stairs.position.y += pattern.floor * off_y ;
+				pattern.stairsBlock[i].platform.position.y += pattern.floor * off_y ;
+			}
+			for (let i = 0 ; i < 2 ; ++i) {
+				pattern.platforms[i].position.y += pattern.floor * off_y ;
+			}
+		}
+
 		function createAdditionnalPlatforms (zFront, xRight, off_y) {
+			let platforms = new Array() ;
 			platforms[0] = createPlatform(xRight, -55 + 3 * off_y, -zFront) ;
 			platforms[1] = createPlatform(0, -55 + 3 * off_y, zFront) ;
-			for (let i = 0 ; i < 2 ; ++i) {
-				scene.add(platforms[i]) ;
-			}
+			return platforms ;
 		}
 
 				/*
