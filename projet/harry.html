@@ -41,7 +41,7 @@
 
             clock = new THREE.Clock();
 			stairsGrp = new Array() ;
-			pattern = new Array() ;
+			pattern = new THREE.Group() ;
 			patternNb = 2 ;
 
             // OVERLAY
@@ -310,6 +310,7 @@
 			function createRoom () {
 				room = createRectangleMesh (600, 1350, 320, stone, 0, 0, 0) ;
 				room.position.y += 1350/2 - 60 ;
+				shadow(room) ;
 				scene.add(room) ;
 			}
 
@@ -340,19 +341,22 @@
 					stairsBlock : createStairsGrp(heightOffset),
 					nb : 7,
 					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
-					floor: 0
+					corridor : createCorridorsGroup(heightOffset),
+					floor : 0
 				} ;
 
 				pattern[1] = {
 					stairsBlock : createStairsGrp(heightOffset),
 					nb : 7,
 					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
-					floor: 4
+					corridor : createCorridorsGroup(heightOffset),
+					floor : 4
 				}
 
 				alterPattern(pattern[1], heightOffset, Math.PI) ;
 
 				for (let j = 0 ; j < 2 ; ++j) {
+					scene.add(pattern[j].corridor) ;
 					for (let i = 0 ; i < 2 ; ++i) {
 						scene.add(pattern[j].platforms[i]) ;
 					}
@@ -374,7 +378,7 @@
 			let zFrontPlatform = 130 ;
 			let xRightPlatform = 270 ;
 
-			grp[0] = {
+			grp[0] = { //bottom right, static
 				stairs: createStairs(20, xLateralStair, -25, zBackStair - 30, 0, -Math.PI, 0),
 				platform: createPlatform(xRightPlatform, -55, -zFrontPlatform),
 				rotPoint: new THREE.Vector3(xRightPlatform, -55, -zFrontPlatform),
@@ -382,7 +386,7 @@
 				rotUnsync: 0,
 				rotSpeedRand: Math.random()
 			} ;
-			grp[1] = {
+			grp[1] = { //front right, static
 				stairs: createStairs(20, xRightStair, -25 + 1 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
 				platform: createPlatform(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
 				rotPoint: new THREE.Vector3(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
@@ -390,7 +394,7 @@
 				rotUnsync: 0,
 				rotSpeedRand: Math.random()
 			} ;
-			grp[2] = {
+			grp[2] = { //left, rotating around level 2 middle-front platform
 				stairs: createStairs(20, -30, -25 + 2 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
 				platform: createPlatform(0, -55 + 2 * heightOffset, zFrontPlatform),
 				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, zFrontPlatform),
@@ -399,7 +403,7 @@
 				rotSpeedRand: Math.random()
 			} ;
 
-			grp[3] = {
+			grp[3] = { //bottom left, static
 				stairs: createStairs(20, -xLateralStair, -25, zFrontStair - 110, 0, 0, 0),
 				platform: createPlatform(-xRightPlatform, -55, zFrontPlatform),
 				rotPoint: new THREE.Vector3(-xRightPlatform, -55, zFrontPlatform),
@@ -408,7 +412,7 @@
 				rotSpeedRand: Math.random()
 			} ;
 
-			grp[4] = {
+			grp[4] = { //back left, static
 				stairs: createStairs(20, -xRightStair, -25 + 1 * heightOffset, -zFrontStair, 0, -Math.PI/2, 0),
 				platform: createPlatform(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
 				rotPoint: new THREE.Vector3(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
@@ -417,14 +421,15 @@
 				rotSpeedRand: Math.random()
 			} ;
 
-			grp[5] = {
-				stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 30, 0, -Math.PI, 0),
+			grp[5] = { //right, rotating around level 2 middle-back platform
+				stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 27, 0, -Math.PI, 0),
 				platform: createPlatform(0, -55 + 2 * heightOffset, -zFrontPlatform),
 				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, -zFrontPlatform),
 				rotDirection: 1,
 				rotUnsync: 0,
 				rotSpeedRand: Math.random()
 			} ;
+
 			grp[6] = {
 				stairs: createStairs(20, xLateralStair, -25 + 3 * heightOffset, zBackStair - 40, 0, Math.PI, 0),
 				platform: createPlatform(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
@@ -437,13 +442,27 @@
 		}
 
 		function alterPattern (pattern, off_y, angle) {
+			let axis = new THREE.Vector3(0, 1, 0) ;
+			let point ;
+
 			for (let i = 0 ; i < pattern.nb ; ++i) {
-				pattern.stairsBlock.rotation.y += angle ;
+				point = new THREE.Vector3(0, pattern.stairsBlock[i].rotPoint.y, 0) ;
+
+				rotateAroundPoint(pattern.stairsBlock[i].stairs, point, axis, Math.PI) ;
+				rotateAroundPoint(pattern.stairsBlock[i].platform, point, axis, Math.PI) ;
+
+				pattern.stairsBlock[i].rotPoint.x *= -1 ;
+				pattern.stairsBlock[i].rotPoint.z *= -1 ;
+
 				pattern.stairsBlock[i].stairs.position.y += pattern.floor * off_y ;
 				pattern.stairsBlock[i].platform.position.y += pattern.floor * off_y ;
+
 			}
+
 			for (let i = 0 ; i < 2 ; ++i) {
 				pattern.platforms[i].position.y += pattern.floor * off_y ;
+				pattern.platforms[i].position.x *= -1 ;
+				pattern.platforms[i].position.z *= -1 ;
 			}
 		}
 
@@ -452,6 +471,63 @@
 			platforms[0] = createPlatform(xRight, -55 + 3 * off_y, -zFront) ;
 			platforms[1] = createPlatform(0, -55 + 3 * off_y, zFront) ;
 			return platforms ;
+		}
+
+		function createCorridorsGroup(heightOffset) {
+			let corridors = new THREE.Group() ;
+			corridors.add(createCorridor(200, 60, 1, 1, 1, 1, heightOffset)) ;
+			return corridors ;
+		}
+
+		function createCorridor (length, width, rampLeft, rampRight, rampFront, rampBack, off_y) {
+			let corridor = new THREE.Group() ;
+			let balustrades = new THREE.Group() ;
+			let platform = createRectangleMesh(length, 3, width, stone, 0, 0, 0) ;
+			let spacing = 10 ;
+			let ramp ;
+			let off = 2 ;
+
+			let rampHeight = 16 ;
+			if (rampLeft == 1) {
+				ramp = createRamp(60, 40, -length/2, rampHeight, 0, 0, 0) ;
+				ramp.position.x += off ;
+				createColumns(balustrades, 60, -30, 'z', -length/2 + off, 8, 0) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampRight == 1) {
+				ramp = createRamp(60, 40, length/2, rampHeight, 0, 0, 0) ;
+				ramp.position.x -= off ;
+				createColumns(balustrades, 60, -30, 'z', length/2 - off, 8, 0) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampFront == 1) {
+				ramp = createRamp(length, 40, 0, rampHeight, -30, 0, Math.PI/2) ;
+				createColumns(balustrades, length, -length/2, 'x', 0, 8, 30) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampBack == 1) {
+				ramp = createRamp(length, 40, 0, rampHeight, 30, 0, Math.PI/2) ;
+				createColumns(balustrades, length, -length/2, 'x', 0, 8, -30) ;
+				balustrades.add(ramp) ;
+			}
+
+			corridor.add(platform, balustrades) ;
+
+			corridor.y += off_y ;
+			return corridor ;
+		}
+
+		function createColumns (balustrade, length, startPoint, axis, off_x, off_y, off_z) {
+			let col ;
+			for (let i = startPoint + 3 ; i < length + startPoint - 3 ; i += 10) {
+				col = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
+				if (axis == 'x') col.position.x += i ;
+				if (axis == 'z') col.position.z += i ;
+				col.position.x += off_x ;
+				col.position.y += off_y ;
+				col.position.z += off_z ;
+				balustrade.add(col) ;
+			}
 		}
 
 				/*
@@ -487,8 +563,12 @@
 					let yTotal = height * nb_stairs ;
 					let length = (nb_stairs + 1) * 10 ;
 
-					let rampRight = createRamp(length, yTotal, 97, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2) ;
-					let rampLeft = createRamp(length, yTotal, 43, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2) ;
+
+					/*
+					TAN = opposé / adj = (opposé = 60) / (adj = 200) = 0.3
+					*/
+					let rampRight = createRamp(length, yTotal, 97, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
+					let rampLeft = createRamp(length, yTotal, 43, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
 					stairs.add(rampLeft) ;
 					stairs.add(rampRight) ;
 					stairsNb++;
@@ -501,15 +581,12 @@
 				/*
 				Ramp for stairs
 				*/
-			function createRamp (length, height, offset_x, offset_y, offset_z) {
-				/*
-				TAN = opposé / adj = (opposé = 60) / (adj = 200) = 0.3
-				*/
-				let angle = height / length ;
+			function createRamp (length, height, offset_x, offset_y, offset_z, angleX, angleY) {
 				let ramp = createRectangleMesh(3, 3, length, stone, 0, 0, 0) ;
 				addToPosition(ramp, offset_x, offset_y, offset_z) ;
 
-				ramp.rotation.x += angle ;
+				ramp.rotation.x += angleX ;
+				ramp.rotation.y += angleY ;
 				shadow(ramp) ;
 				return ramp ;
 			}
