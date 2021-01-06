@@ -38,6 +38,7 @@
 			let analyser;
 			let stairsGrp, stairsNb, pattern, patternNb;
 			let room ;
+			let tiger, loadingManager, mixer, action ;
 			let raycaster;
 			const velocity = new THREE.Vector3();
 			const direction = new THREE.Vector3();
@@ -47,7 +48,7 @@
 			let moveRight = false;
 			let canJump = false;
 
-      clock = new THREE.Clock();
+      		clock = new THREE.Clock();
 			stairsGrp = new Array() ;
 			pattern = new THREE.Group() ;
 			patternNb = 2 ;
@@ -60,60 +61,64 @@
 
 			//###############		INIT		################################
 			function init() {
-        const container = document.getElementById( 'container' );
+		        const container = document.getElementById( 'container' );
 
-        camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 1000 );
-        camera.position.set( 80, 200, 150 );
-        scene = new THREE.Scene();
+		        camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 1000 );
+		        camera.position.set( 80, 200, 150 );
+		        scene = new THREE.Scene();
 
 
-        //stats fps
-        stats = new Stats();
-        container.appendChild( stats.dom );
+		        //stats fps
+		        stats = new Stats();
+		        container.appendChild( stats.dom );
 
-        //overlay
-        const overlay = document.getElementById( 'overlay' );
-        overlay.remove();
+		        //overlay
+		        const overlay = document.getElementById( 'overlay' );
+		        overlay.remove();
 
 				//raycast
 				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
 				keyListener();
 
-        // Renderer & material
+        		// Renderer & material
 				setRenderer();
 				createMaterials();
 
-        //	Controls & light
-        createControls();
-        createLight();
+		        //	Controls & light
+		        createControls();
+		        createLight();
 
-        //  Stairwell
+		        //  Stairwell
 				createRoom() ;
-        createStairwell() ;
+		        createStairwell() ;
 
-        //  Environnement
+				//  tiger
+				loadingManager = new THREE.LoadingManager( addObjects );
+				createTiger() ;
+
+		        //  Environnement
 				createPlane();
 
 				time = 0 ;
-        animate();
+		        animate();
 
-        window.addEventListener( 'resize', onWindowResize, false );
-      }
+		        window.addEventListener( 'resize', onWindowResize, false );
+      		}
 
-            //###############		ON WINDOW RESIZE		####################
-			function onWindowResize() {
+        //###############		ON WINDOW RESIZE		####################
+		function onWindowResize() {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setSize( window.innerWidth, window.innerHeight );
 
-				controls.handleResize();	// FirstPersonControl
-			}
+			controls.handleResize();	// FirstPersonControl
+		}
 
 
-    //###############		ANIMATION		############################
-		  function animate() {
+    	//###############		ANIMATION		############################
+	  function animate() {
 		    //lightHelper.update();
 		    //shadowCameraHelper.update();
 
@@ -124,51 +129,57 @@
 		    //fps
 		    stats.update();
 
-		    //FirstPersonControl
-		    //if( camera.position.y < -20) camera.position.y = -20;
-		    //if( camera.position.y > 0) camera.position.y = 0;
-		    controls.update( delta );
 
-				let axis = new THREE.Vector3(0, 1, 0) ;
-				time += delta ;
-				for (let i = 0 ; i < patternNb ; ++i) {
-					for (let j = 0 ; j < pattern[i].nb ; ++j) {
-						if (rotationDirection() == 1)
-							rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * delta / 2) ;
-						else if (rotationDirection() == -1)
-							rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * (-delta) / 2) ;
-					}
+			let axis = new THREE.Vector3(0, 1, 0) ;
+			time += delta ;
+			for (let i = 0 ; i < patternNb ; ++i) {
+				for (let j = 0 ; j < pattern[i].nb ; ++j) {
+					if (rotationDirection() == 1)
+						rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * delta / 2) ;
+					else if (rotationDirection() == -1)
+						rotateAroundPoint(pattern[i].stairsBlock[j].stairs, pattern[i].stairsBlock[j].rotPoint, axis, pattern[i].stairsBlock[j].rotDirection * (-delta) / 2) ;
 				}
+			}
 
-				//raycast
+
+			if ( mixer ) mixer.update( delta );
+
+			//FirstPersonControl & raycast
+			if( tiger && camera ){
+				//tiger.position.x = camera.position.x ;
+				//tiger.position.y = camera.position.y ;
+				//tiger.position.z = camera.position.z ;
+				//tiger.rotation.y = camera.rotation.y;
+				controls.update( delta );
 				rayCastMove(delta);
-		  }
+			}
+	  }
 
-			function rotationDirection () {
-				if (time % (4 * Math.PI) < 2 * Math.PI)
-					if (time % (Math.PI * 2) < Math.PI)
-						return 1 ;
-					else
-						return 0 ;
+		function rotationDirection () {
+			if (time % (4 * Math.PI) < 2 * Math.PI)
+				if (time % (Math.PI * 2) < Math.PI)
+					return 1 ;
 				else
-					if (time % (Math.PI * 2)  <  Math.PI)
-						return -1 ;
-				return 0 ;
-			}
+					return 0 ;
+			else
+				if (time % (Math.PI * 2)  <  Math.PI)
+					return -1 ;
+			return 0 ;
+		}
 
-			/*
-			Set the point of rotation around a point
-			obj		-	Obj
-			point -
-			axis 	-
-			theta	-
-			*/
-			function rotateAroundPoint(obj, point, axis, theta){
-			    obj.position.sub(point); // remove the offset
-			    obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
-			    obj.position.add(point); // re-add the offset
-			    obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-			}
+		/*
+		Set the point of rotation around a point
+		obj		-	Obj
+		point -
+		axis 	-
+		theta	-
+		*/
+		function rotateAroundPoint(obj, point, axis, theta){
+		    obj.position.sub(point); // remove the offset
+		    obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
+		    obj.position.add(point); // re-add the offset
+		    obj.rotateOnAxis(axis, theta); // rotate the OBJECT
+		}
 
       //###############		RENDERER & CONTROLS		####################
       /*
@@ -291,381 +302,415 @@
           obj.receiveShadow = true;
       }
 
-      //###############		MESH		##################################
-      /*
-      Creates a mesh from a box geometry
-      x, y, z 				Dimensions of the box
-      material 				Texture of the mesh
-      rot_x, rot_y, rot_z		Rotation applied to the object
-      */
-      function createRectangleMesh (x, y, z, material, rot_x, rot_y, rot_z) {
-          let rectGeom = new THREE.BoxBufferGeometry( x, y, z );
-          let rect = new THREE.Mesh( rectGeom, material );
-          rect.rotation.x += rot_x ;
-          rect.rotation.y += rot_y ;
-          rect.rotation.z += rot_z ;
-          return rect ;
-      }
+	  //###############		MESH		##################################
+	  /*
+	  Creates a mesh from a box geometry
+	  x, y, z 				Dimensions of the box
+	  material 				Texture of the mesh
+	  rot_x, rot_y, rot_z		Rotation applied to the object
+	  */
+	  function createRectangleMesh (x, y, z, material, rot_x, rot_y, rot_z) {
+	      let rectGeom = new THREE.BoxBufferGeometry( x, y, z );
+	      let rect = new THREE.Mesh( rectGeom, material );
+	      rect.rotation.x += rot_x ;
+	      rect.rotation.y += rot_y ;
+	      rect.rotation.z += rot_z ;
+	      return rect ;
+	  }
 
-      /*
-			Adds offsets to the position of an object
-			object 					Object (type : new THREE.Mesh)
-			off_x, off_y, off_z		Offsets added to each direction
-			*/
- 			function addToPosition (object, off_x, off_y, off_z) {
-				object.position.x += off_x ;
-				object.position.y += off_y ;
-				object.position.z += off_z ;
-				return object ;
+      	/*
+		Adds offsets to the position of an object
+		object 					Object (type : new THREE.Mesh)
+		off_x, off_y, off_z		Offsets added to each direction
+		*/
+		function addToPosition (object, off_x, off_y, off_z) {
+			object.position.x += off_x ;
+			object.position.y += off_y ;
+			object.position.z += off_z ;
+			return object ;
+		}
+
+		/*
+		create the main room
+		*/
+		function createRoom () {
+			room = createRectangleMesh (600, 1350, 320, stone, 0, 0, 0) ;
+			room.position.y += 1350/2 - 60 ;
+			shadow(room) ;
+			scene.add(room) ;
+		}
+
+		/*
+		create plateform between stairs
+		center_x -
+		center_y -
+		center_z -
+		*/
+		function createPlatform (center_x, center_y, center_z) {
+			let platform = createRectangleMesh(60, 3, 60, stone, 0, 0, 0) ;
+			platform.position.set(center_x, center_y, center_z) ;
+			shadow(platform) ;
+			return platform ;
+		}
+
+
+		/*
+
+		*/
+		function createStairwell () {
+			let heightOffset = 60 ;
+
+			let zFrontPlatform = 130 ;
+			let xRightPlatform = 270 ;
+
+			pattern[0] = {
+				stairsBlock : createStairsGrp(heightOffset),
+				nb : 7,
+				platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
+				//corridor : createCorridorsGroup(heightOffset),
+				floor : 0
+			} ;
+
+			pattern[1] = {
+				stairsBlock : createStairsGrp(heightOffset),
+				nb : 7,
+				platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
+				//corridor : createCorridorsGroup(heightOffset),
+				floor : 4
 			}
 
-			/*
-			create the main room
-			*/
-			function createRoom () {
-				room = createRectangleMesh (600, 1350, 320, stone, 0, 0, 0) ;
-				room.position.y += 1350/2 - 60 ;
-				shadow(room) ;
-				scene.add(room) ;
-			}
+			alterPattern(pattern[1], heightOffset, Math.PI) ;
 
-			/*
-			create plateform between stairs
-			center_x -
-			center_y -
-			center_z -
-			*/
-			function createPlatform (center_x, center_y, center_z) {
-				let platform = createRectangleMesh(60, 3, 60, stone, 0, 0, 0) ;
-				platform.position.set(center_x, center_y, center_z) ;
-				shadow(platform) ;
-				return platform ;
-			}
-
-
-			/*
-
-			*/
-			function createStairwell () {
-				let heightOffset = 60 ;
-
-				let zFrontPlatform = 130 ;
-				let xRightPlatform = 270 ;
-
-				pattern[0] = {
-					stairsBlock : createStairsGrp(heightOffset),
-					nb : 7,
-					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
-					corridor : createCorridorsGroup(heightOffset),
-					floor : 0
-				} ;
-
-				pattern[1] = {
-					stairsBlock : createStairsGrp(heightOffset),
-					nb : 7,
-					platforms : createAdditionnalPlatforms(zFrontPlatform, xRightPlatform, heightOffset),
-					corridor : createCorridorsGroup(heightOffset),
-					floor : 4
-				}
-
-				alterPattern(pattern[1], heightOffset, Math.PI) ;
-
-				for (let j = 0 ; j < 2 ; ++j) {
-					scene.add(pattern[j].corridor) ;
-					for (let i = 0 ; i < 2 ; ++i) {
-						scene.add(pattern[j].platforms[i]) ;
-					}
-
-					for (let i = 0 ; i < pattern[j].nb ; ++i) {
-						scene.add(pattern[j].stairsBlock[i].stairs, pattern[j].stairsBlock[i].platform) ;
-					}
-				}
-			}
-
-			function createStairsGrp(heightOffset) {
-				let grp = new THREE.Group() ;
-
-				let zFrontStair = 200 ;
-				let zBackStair = -60 ;
-				let xRightStair = 230 ;
-				let xLateralStair = 340 ;
-
-				let zFrontPlatform = 130 ;
-				let xRightPlatform = 270 ;
-
-				grp[0] = { //bottom right, static
-					stairs: createStairs(20, xLateralStair, -25, zBackStair - 30, 0, -Math.PI, 0),
-					platform: createPlatform(xRightPlatform, -55, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55, -zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				grp[1] = { //front right, static
-					stairs: createStairs(20, xRightStair, -25 + 1 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
-					platform: createPlatform(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				grp[2] = { //left, rotating around level 2 middle-front platform
-					stairs: createStairs(20, -30, -25 + 2 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
-					platform: createPlatform(0, -55 + 2 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, zFrontPlatform),
-					rotDirection: -1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-
-				grp[3] = { //bottom left, static
-					stairs: createStairs(20, -xLateralStair, -25, zFrontStair - 110, 0, 0, 0),
-					platform: createPlatform(-xRightPlatform, -55, zFrontPlatform),
-					rotPoint: new THREE.Vector3(-xRightPlatform, -55, zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-
-				grp[4] = { //back left, static
-					stairs: createStairs(20, -xRightStair, -25 + 1 * heightOffset, -zFrontStair, 0, -Math.PI/2, 0),
-					platform: createPlatform(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
-					rotDirection: 0,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-
-				grp[5] = { //right, rotating around level 2 middle-back platform
-					stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 27, 0, -Math.PI, 0),
-					platform: createPlatform(0, -55 + 2 * heightOffset, -zFrontPlatform),
-					rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, -zFrontPlatform),
-					rotDirection: 1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-
-				grp[6] = {
-					stairs: createStairs(20, xLateralStair, -25 + 3 * heightOffset, zBackStair - 40, 0, Math.PI, 0),
-					platform: createPlatform(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
-					rotPoint: new THREE.Vector3(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
-					rotDirection: 1,
-					rotUnsync: 0,
-					rotSpeedRand: Math.random()
-				} ;
-				return grp ;
-			}
-
-			function alterPattern (pattern, off_y, angle) {
-				let axis = new THREE.Vector3(0, 1, 0) ;
-				let point ;
-
-				for (let i = 0 ; i < pattern.nb ; ++i) {
-					point = new THREE.Vector3(0, pattern.stairsBlock[i].rotPoint.y, 0) ;
-
-					rotateAroundPoint(pattern.stairsBlock[i].stairs, point, axis, Math.PI) ;
-					rotateAroundPoint(pattern.stairsBlock[i].platform, point, axis, Math.PI) ;
-
-					pattern.stairsBlock[i].rotPoint.x *= -1 ;
-					pattern.stairsBlock[i].rotPoint.z *= -1 ;
-
-					pattern.stairsBlock[i].stairs.position.y += pattern.floor * off_y ;
-					pattern.stairsBlock[i].platform.position.y += pattern.floor * off_y ;
-
-				}
-
+			for (let j = 0 ; j < 2 ; ++j) {
+				//scene.add(pattern[j].corridor) ;
 				for (let i = 0 ; i < 2 ; ++i) {
-					pattern.platforms[i].position.y += pattern.floor * off_y ;
-					pattern.platforms[i].position.x *= -1 ;
-					pattern.platforms[i].position.z *= -1 ;
+					scene.add(pattern[j].platforms[i]) ;
+				}
+
+				for (let i = 0 ; i < pattern[j].nb ; ++i) {
+					scene.add(pattern[j].stairsBlock[i].stairs, pattern[j].stairsBlock[i].platform) ;
 				}
 			}
+		}
 
-			function createAdditionnalPlatforms (zFront, xRight, off_y) {
-				let platforms = new Array() ;
-				platforms[0] = createPlatform(xRight, -55 + 3 * off_y, -zFront) ;
-				platforms[1] = createPlatform(0, -55 + 3 * off_y, zFront) ;
-				return platforms ;
+		function createStairsGrp(heightOffset) {
+			let grp = new THREE.Group() ;
+
+			let zFrontStair = 200 ;
+			let zBackStair = -60 ;
+			let xRightStair = 230 ;
+			let xLateralStair = 340 ;
+
+			let zFrontPlatform = 130 ;
+			let xRightPlatform = 270 ;
+
+			grp[0] = { //bottom right, static
+				stairs: createStairs(20, xLateralStair, -25, zBackStair - 30, 0, -Math.PI, 0),
+				platform: createPlatform(xRightPlatform, -55, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55, -zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			grp[1] = { //front right, static
+				stairs: createStairs(20, xRightStair, -25 + 1 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
+				platform: createPlatform(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55 + 1 * heightOffset, zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			grp[2] = { //left, rotating around level 2 middle-front platform
+				stairs: createStairs(20, -30, -25 + 2 * heightOffset, zFrontStair, 0, Math.PI/2, 0),
+				platform: createPlatform(0, -55 + 2 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, zFrontPlatform),
+				rotDirection: -1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[3] = { //bottom left, static
+				stairs: createStairs(20, -xLateralStair, -25, zFrontStair - 110, 0, 0, 0),
+				platform: createPlatform(-xRightPlatform, -55, zFrontPlatform),
+				rotPoint: new THREE.Vector3(-xRightPlatform, -55, zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[4] = { //back left, static
+				stairs: createStairs(20, -xRightStair, -25 + 1 * heightOffset, -zFrontStair, 0, -Math.PI/2, 0),
+				platform: createPlatform(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(-xRightPlatform, -55 + 1 * heightOffset, -zFrontPlatform),
+				rotDirection: 0,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[5] = { //right, rotating around level 2 middle-back platform
+				stairs: createStairs(20, 70, -25 + 2 * heightOffset, zBackStair - 27, 0, -Math.PI, 0),
+				platform: createPlatform(0, -55 + 2 * heightOffset, -zFrontPlatform),
+				rotPoint: new THREE.Vector3(0, -55 + 2 * heightOffset, -zFrontPlatform),
+				rotDirection: 1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+
+			grp[6] = {
+				stairs: createStairs(20, xLateralStair, -25 + 3 * heightOffset, zBackStair - 40, 0, Math.PI, 0),
+				platform: createPlatform(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
+				rotPoint: new THREE.Vector3(xRightPlatform, -55 + 4 * heightOffset, zFrontPlatform),
+				rotDirection: 1,
+				rotUnsync: 0,
+				rotSpeedRand: Math.random()
+			} ;
+			return grp ;
+		}
+
+		function alterPattern (pattern, off_y, angle) {
+			let axis = new THREE.Vector3(0, 1, 0) ;
+			let point ;
+
+			for (let i = 0 ; i < pattern.nb ; ++i) {
+				point = new THREE.Vector3(0, pattern.stairsBlock[i].rotPoint.y, 0) ;
+
+				rotateAroundPoint(pattern.stairsBlock[i].stairs, point, axis, Math.PI) ;
+				rotateAroundPoint(pattern.stairsBlock[i].platform, point, axis, Math.PI) ;
+
+				pattern.stairsBlock[i].rotPoint.x *= -1 ;
+				pattern.stairsBlock[i].rotPoint.z *= -1 ;
+
+				pattern.stairsBlock[i].stairs.position.y += pattern.floor * off_y ;
+				pattern.stairsBlock[i].platform.position.y += pattern.floor * off_y ;
+
 			}
 
-			function createCorridorsGroup(heightOffset) {
-				let corridors = new THREE.Group() ;
-				corridors.add(createCorridor(200, 60, 1, 1, 1, 1, heightOffset)) ;
-				return corridors ;
+			for (let i = 0 ; i < 2 ; ++i) {
+				pattern.platforms[i].position.y += pattern.floor * off_y ;
+				pattern.platforms[i].position.x *= -1 ;
+				pattern.platforms[i].position.z *= -1 ;
+			}
+		}
+
+		function createAdditionnalPlatforms (zFront, xRight, off_y) {
+			let platforms = new Array() ;
+			platforms[0] = createPlatform(xRight, -55 + 3 * off_y, -zFront) ;
+			platforms[1] = createPlatform(0, -55 + 3 * off_y, zFront) ;
+			return platforms ;
+		}
+
+		function createCorridorsGroup(heightOffset) {
+			let corridors = new THREE.Group() ;
+			corridors.add(createCorridor(200, 60, 1, 1, 1, 1, heightOffset)) ;
+			return corridors ;
+		}
+
+		function createCorridor (length, width, rampLeft, rampRight, rampFront, rampBack, off_y) {
+			let corridor = new THREE.Group() ;
+			let balustrades = new THREE.Group() ;
+			let platform = createRectangleMesh(length, 3, width, stone, 0, 0, 0) ;
+			let spacing = 10 ;
+			let ramp ;
+			let off = 2 ;
+
+			let rampHeight = 16 ;
+			if (rampLeft == 1) {
+				ramp = createRamp(60, 40, -length/2, rampHeight, 0, 0, 0) ;
+				ramp.position.x += off ;
+				createColumns(balustrades, 60, -30, 'z', -length/2 + off, 8, 0) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampRight == 1) {
+				ramp = createRamp(60, 40, length/2, rampHeight, 0, 0, 0) ;
+				ramp.position.x -= off ;
+				createColumns(balustrades, 60, -30, 'z', length/2 - off, 8, 0) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampFront == 1) {
+				ramp = createRamp(length, 40, 0, rampHeight, -30, 0, Math.PI/2) ;
+				createColumns(balustrades, length, -length/2, 'x', 0, 8, 30) ;
+				balustrades.add(ramp) ;
+			}
+			if (rampBack == 1) {
+				ramp = createRamp(length, 40, 0, rampHeight, 30, 0, Math.PI/2) ;
+				createColumns(balustrades, length, -length/2, 'x', 0, 8, -30) ;
+				balustrades.add(ramp) ;
 			}
 
-			function createCorridor (length, width, rampLeft, rampRight, rampFront, rampBack, off_y) {
-				let corridor = new THREE.Group() ;
-				let balustrades = new THREE.Group() ;
-				let platform = createRectangleMesh(length, 3, width, stone, 0, 0, 0) ;
-				let spacing = 10 ;
-				let ramp ;
-				let off = 2 ;
+			corridor.add(platform, balustrades) ;
 
-				let rampHeight = 16 ;
-				if (rampLeft == 1) {
-					ramp = createRamp(60, 40, -length/2, rampHeight, 0, 0, 0) ;
-					ramp.position.x += off ;
-					createColumns(balustrades, 60, -30, 'z', -length/2 + off, 8, 0) ;
-					balustrades.add(ramp) ;
-				}
-				if (rampRight == 1) {
-					ramp = createRamp(60, 40, length/2, rampHeight, 0, 0, 0) ;
-					ramp.position.x -= off ;
-					createColumns(balustrades, 60, -30, 'z', length/2 - off, 8, 0) ;
-					balustrades.add(ramp) ;
-				}
-				if (rampFront == 1) {
-					ramp = createRamp(length, 40, 0, rampHeight, -30, 0, Math.PI/2) ;
-					createColumns(balustrades, length, -length/2, 'x', 0, 8, 30) ;
-					balustrades.add(ramp) ;
-				}
-				if (rampBack == 1) {
-					ramp = createRamp(length, 40, 0, rampHeight, 30, 0, Math.PI/2) ;
-					createColumns(balustrades, length, -length/2, 'x', 0, 8, -30) ;
-					balustrades.add(ramp) ;
-				}
+			corridor.y += off_y ;
+			return corridor ;
+		}
 
-				corridor.add(platform, balustrades) ;
-
-				corridor.y += off_y ;
-				return corridor ;
+		function createColumns (balustrade, length, startPoint, axis, off_x, off_y, off_z) {
+			let col ;
+			for (let i = startPoint + 3 ; i < length + startPoint - 3 ; i += 10) {
+				col = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
+				if (axis == 'x') col.position.x += i ;
+				if (axis == 'z') col.position.z += i ;
+				col.position.x += off_x ;
+				col.position.y += off_y ;
+				col.position.z += off_z ;
+				balustrade.add(col) ;
 			}
+		}
 
-			function createColumns (balustrade, length, startPoint, axis, off_x, off_y, off_z) {
-				let col ;
-				for (let i = startPoint + 3 ; i < length + startPoint - 3 ; i += 10) {
-					col = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
-					if (axis == 'x') col.position.x += i ;
-					if (axis == 'z') col.position.z += i ;
-					col.position.x += off_x ;
-					col.position.y += off_y ;
-					col.position.z += off_z ;
-					balustrade.add(col) ;
-				}
-			}
-
-					/*
+				/*
 					off_x, y, z - spacial coordinates
 					rot_x, y, z - spacial rotation
 					*/
-	        function createStairs (nb_stairs, off_x, off_y, off_z, rot_x, rot_y, rot_z) {
-						let stairs = new THREE.Group();
-						let arr_stairs = new Array(3) ;
-						let width, depth;
-						let height = 3;
-						let stair_col = new Array(3) ;
-						let i ;
+        function createStairs (nb_stairs, off_x, off_y, off_z, rot_x, rot_y, rot_z) {
+			let stairs = new THREE.Group();
+			let arr_stairs = new Array(3) ;
+			let width, depth;
+			let height = 3;
+			let stair_col = new Array(3) ;
+			let i ;
 
-						for (i = 0 ; i < 20 ; ++i) {
-							width = 60 ;
-							depth = 20 ;
-							arr_stairs[i] = createRectangleMesh(width, height, depth, stone, 0, 0, 0) ;
-							arr_stairs[i].position.set( 70, (height * i) - 30, (-10) * i);
-							shadow(arr_stairs[i]) ;
-							stairs.add(arr_stairs[i]) ;
+			for (i = 0 ; i < 20 ; ++i) {
+				width = 60 ;
+				depth = 20 ;
+				arr_stairs[i] = createRectangleMesh(width, height, depth, stone, 0, 0, 0) ;
+				arr_stairs[i].position.set( 70, (height * i) - 30, (-10) * i);
+				shadow(arr_stairs[i]) ;
+				stairs.add(arr_stairs[i]) ;
 
-							stair_col[2*i] = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
-							stair_col[2*i].position.set( 43, (height * i) - 21, (-10) * i + 5);
-							stair_col[2*i+1] = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
-							stair_col[2*i+1].position.set( 97, (height * i) - 21, (-10) * i + 5);
-							shadow(stair_col[2*i]);
-							shadow(stair_col[2*i+1]);
-							stairs.add(stair_col[2*i+1]) ;
-							stairs.add(stair_col[2*i]) ;
-						}
+				stair_col[2*i] = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
+				stair_col[2*i].position.set( 43, (height * i) - 21, (-10) * i + 5);
+				stair_col[2*i+1] = createRectangleMesh(3, 16, 3, stone, 0, 0, 0) ;
+				stair_col[2*i+1].position.set( 97, (height * i) - 21, (-10) * i + 5);
+				shadow(stair_col[2*i]);
+				shadow(stair_col[2*i+1]);
+				stairs.add(stair_col[2*i+1]) ;
+				stairs.add(stair_col[2*i]) ;
+			}
 
-						let yTotal = height * nb_stairs ;
-						let length = (nb_stairs + 1) * 10 ;
+			let yTotal = height * nb_stairs ;
+			let length = (nb_stairs + 1) * 10 ;
 
 
-						/*
-						TAN = opposé / adj = (opposé = 60) / (adj = 200) = 0.3
-						*/
-						let rampRight = createRamp(length, yTotal, 97, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
-						let rampLeft = createRamp(length, yTotal, 43, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
-						stairs.add(rampLeft) ;
-						stairs.add(rampRight) ;
-						stairsNb++;
+			/*
+			TAN = opposé / adj = (opposé = 60) / (adj = 200) = 0.3
+			*/
+			let rampRight = createRamp(length, yTotal, 97, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
+			let rampLeft = createRamp(length, yTotal, 43, (yTotal - 30)/ 2, 10 + nb_stairs * (-10) / 2, yTotal / length, 0) ;
+			stairs.add(rampLeft) ;
+			stairs.add(rampRight) ;
+			stairsNb++;
 
-						stairs.position.set(off_x, off_y, off_z) ;
-						stairs.rotation.set(rot_x, rot_y, rot_z) ;
-						return stairs ;
-					}
+			stairs.position.set(off_x, off_y, off_z) ;
+			stairs.rotation.set(rot_x, rot_y, rot_z) ;
+			return stairs ;
+		}
 
-					/*
-					Ramp for stairs
-					*/
-				function createRamp (length, height, offset_x, offset_y, offset_z, angleX, angleY) {
-					let ramp = createRectangleMesh(3, 3, length, stone, 0, 0, 0) ;
-					addToPosition(ramp, offset_x, offset_y, offset_z) ;
+			/*
+			Ramp for stairs
+			*/
+		function createRamp (length, height, offset_x, offset_y, offset_z, angleX, angleY) {
+			let ramp = createRectangleMesh(3, 3, length, stone, 0, 0, 0) ;
+			addToPosition(ramp, offset_x, offset_y, offset_z) ;
 
-					ramp.rotation.x += angleX ;
-					ramp.rotation.y += angleY ;
-					shadow(ramp) ;
-					return ramp ;
-				}
+			ramp.rotation.x += angleX ;
+			ramp.rotation.y += angleY ;
+			shadow(ramp) ;
+			return ramp ;
+		}
 
-	            //########		ENVIRONMENT		############################
-				function createPlane() {
-					let floor;
-					floor = createRectangleMesh(10000,0.1,10000,ground,0,0,0);
-					addToPosition(floor,0,-57,0);
-					floor.receiveShadow = true;
-					scene.add(floor);
-				}
+		//###############		tiger		##################################
+		function createTiger(){
+
+			const loader = new GLTFLoader(loadingManager);
+			loader.load("../assets_low/tiger/source/Unity2Skfb/Unity2Skfb.gltf", function(obj) {
+				obj.scene.position.set(0, -30, -30);
+
+				//animation
+				mixer = new THREE.AnimationMixer( obj.scene );
+				action = mixer.clipAction( obj.animations[0] );
+				action.timeScale = 0.5;  // animation speed / 2
+				action.play();
+
+				tiger = obj.scene;
+
+				//shadow
+				tiger.traverse( function(child){
+					if( child.isMesh )
+						shadow(child);
+				});
+
+			});
+
+		}
+
+
+		function addObjects(){
+			scene.add(tiger);
+			render();
+		}
+
+	        //########		ENVIRONMENT		############################
+			function createPlane() {
+				let floor;
+				floor = createRectangleMesh(10000,0.1,10000,ground,0,0,0);
+				addToPosition(floor,0,-57,0);
+				floor.receiveShadow = true;
+				scene.add(floor);
+			}
 
 	            //###############		SOUND		###############################
 	      function addSound(mesh) {
-					//listener
-					const listener = new THREE.AudioListener();
-					camera.add( listener );
+			//listener
+			const listener = new THREE.AudioListener();
+			camera.add( listener );
 
-					//loader
-					const audioLoader = new THREE.AudioLoader();
-					const sound = new THREE.PositionalAudio( listener );
-					audioLoader.load( '../assets_low/sounds/358232_j_s_song.ogg', function ( buffer ) {
-						sound.setBuffer( buffer );
-						sound.setRefDistance( 2 );
-						sound.play();
-					} );
-					mesh.add( sound );
+			//loader
+			const audioLoader = new THREE.AudioLoader();
+			const sound = new THREE.PositionalAudio( listener );
+			audioLoader.load( '../assets_low/sounds/358232_j_s_song.ogg', function ( buffer ) {
+				sound.setBuffer( buffer );
+				sound.setRefDistance( 2 );
+				sound.play();
+			} );
+			mesh.add( sound );
 
-					//analyser
-					//analyser = new THREE.AudioAnalyser( sound, 32 ); //representing the size of the FFT (Fast Fourier Transform) to be used to determine the frequency domain.
+			//analyser
+			//analyser = new THREE.AudioAnalyser( sound, 32 ); //representing the size of the FFT (Fast Fourier Transform) to be used to determine the frequency domain.
 
-				}
+		   }
 
-			function rayCastMove(delta){
+			function rayCastMove (delta){
 				const delt = delta / 1;
-				raycaster.ray.origin.copy( camera.position );
-				raycaster.ray.origin.y -= 10;
+				raycaster.ray.origin.copy(  tiger.position );
+				raycaster.ray.origin.y -= 30;
 				const intersections = raycaster.intersectObjects( scene.children, true );
 				const onObject = intersections.length > 0;
 
-				velocity.x -= velocity.x * 10.0 * delt;
-				velocity.z -= velocity.z * 10.0 * delt;
-				velocity.y -= 9.806 * 100.0 * delt; // 100.0 = mass
+				velocity.x -= velocity.x;
+				velocity.z -= velocity.z;
+				velocity.y -= 9.806 * 10.0 * delt; // 100.0 = mass
 
 				direction.z = Number( moveForward ) - Number( moveBackward );  // Number can convert boolean to int 0 or 1
 				direction.x = Number( moveRight ) - Number( moveLeft );
 				direction.normalize(); // this ensures consistent movements in all directions
 
-				if ( moveForward || moveBackward ) velocity.z -= direction.z * 400.0 * delt;
-				if ( moveLeft || moveRight ) velocity.x -= direction.x * 400.0 * delt;
+				if ( moveForward || moveBackward ) velocity.z -= direction.z;
+				if ( moveLeft || moveRight ) velocity.x -= direction.x;
+
 
 				if ( onObject === true ) {
 					velocity.y = Math.max( 0, velocity.y );
 					canJump = true;
 				}
 
-				controls.object.position.x =  - velocity.x * delt ;
-				controls.object.position.z = - velocity.z * delt ;
-				controls.object.position.y += ( velocity.y * delt ); // new behavior
+				tiger.position.x -= velocity.x * 10.0 * delt ;
+				tiger.position.z -= velocity.z * 10.0 * delt;
+				tiger.position.y += ( velocity.y); // new behavior
 
-				if ( controls.object.position.y < 10 ) {
+				console.log(- velocity.z);
+
+				if ( tiger.position.y < 10 ) {
 					velocity.y = 0;
-					controls.object.position.y = 10;
+					tiger.position.y = 10;
 					canJump = true;
 				}
 
